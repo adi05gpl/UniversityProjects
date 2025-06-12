@@ -1,0 +1,8 @@
+User Input: 
+heyhey
+
+ENCRYPTION: 
+6TpNEtJZg+1Y9EjrtVWNkA==
+
+DECRYPTION: 
+heyhey

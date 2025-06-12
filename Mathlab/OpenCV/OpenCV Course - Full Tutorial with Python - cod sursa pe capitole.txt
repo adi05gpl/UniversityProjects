@@ -1,0 +1,592 @@
+#Tutorial Link: https://www.youtube.com/watch?v=oXlwWbU8l2o&t=783s
+			Chapter 1: Reading Images & videos
+import cv2 as cv
+#------------------------------------------
+#Reading images
+#------------------------------------------
+img = cv.imread("Photos/cat.jpg")
+img2 = cv.imread("Photos/cat_large.jpg")
+
+
+
+cv.imshow("Cat", img)
+cv.imshow("Cat Large", img2)
+cv.waitKey(0)  // 0 - infinit, 1 = milisecunda
+
+#-------------------------------------------
+#Reading videos
+#-------------------------------------------
+capture = cv.VideoCapture("Videos/dog.mp4")
+
+while True:
+	isTrue, frame = capture.read()
+	cv.imshow("Video", frame)
+	
+	if cv.waitKey(20) & 0xFF==ord("d"):
+		break;
+
+capture.release()
+cv.destroyAllWindows()
+
+			Chapter 2: Rescale and resize
+import cv2 as cv
+
+img = cv.imread("Photos/cat.jpg")
+cv.imshow("Cat",img)
+
+def rescaleFrame(frame, scale=0.75):
+	#Images, videos and Live Video
+	width = int(frame.shape[1] * scale)
+	height = int(frame.shape[0] * scale)
+	dimensions = (width,height)
+	
+	return cv.resize(frame, dimensions, interpolation=cv.INTER_AREA)
+
+resized_image = rescaleFrame(img)
+cv.imshow("Resized Image", resized_image)
+
+def changeRes(width,height):
+	#Live Video
+	capture.set(3,width)
+	capture.set(4,height)
+
+#-------------------------------------------
+#Reading videos
+#-------------------------------------------
+capture = cv.VideoCapture("Videos/dog.mp4")
+
+while True:
+	isTrue, frame = capture.read()
+
+	frame_resized = rescaleFrame(frame, scale = .2)
+
+	cv.imshow("Video", frame)
+	cv.imshow("Video Resized", frame_resized)
+	
+	if cv.waitKey(20) & 0xFF==ord("d"):
+		break;
+
+capture.release()
+cv.destroyAllWindows()
+
+
+			Chapter 3: Drawing Shapes & Putting Text
+
+import cv2 as cv
+import numpy as np
+
+blank = np.zeros((500,500,3), dtype="uint8")		//dimensiunea = 500, 500, shape of 3 ( RGB ) & data type = uint8 ( of an image )
+cv.imshow("Blank", blank)
+
+img = cv.imread("Photos/cat.jpg")
+cv.imshow("Cat",img)
+
+#1. Point the image a certain colour
+#blank[:] = 0,255,0
+#cv.imshow("Green", blank)
+
+#blank[200:300, 300:400] = 0,0,255		// deseneaza un patrat rosu de la coordonatele respective x, y pe imaginea blank
+#cv.imshow("Red", blank)
+
+#2. Draw a Rectangle
+cv.rectangle(blank, (0,0), (blank.shape[1]//2, blank.shape[0]//2), (0,255,0), thickness=-1)   // imaginea, originea, coordonatele pana unde va desena (250, 250), culoarea si grosimea (-1 umple desenul de culoare)
+cv.imshow("Rectangle", blank)
+
+#3. Draw a circle
+cv.circle(blank, (blank.shape[1]//2, blank.shape[0]//2), 40, (0,0,255), thickness=-1) // imaginea, centrul (250, 250), raza, culoarea si grosimea ( -1 umple cercul cu culoare)
+cv.imshow("Circle", blank)
+
+#4. Draw a line
+				#(250, 250)
+cv.line(blank, (100,250), (300,400), (255,255,255), thickness=3)
+cv.imshow("Line", blank)
+
+#5. Write text
+cv.putText(blank, "Hello, this is a text", (0,225), cv.FONT_HERSHEY_TRIPLEX, 1.0, (0,255,0) , 2)   // imaginea, textul, originea, tipul de scris, marimea textului, culoarea, grosimea
+cv.imshow("Text", blank)
+
+cv.waitKey(0)
+
+
+			Chapter 4: 5 Essential Functions in OpenCV
+import cv2 as cv
+
+img = cv.imread("Photos/cat.jpg")
+cv.imshow("Cat", img)
+
+#Converting to grayscale
+gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)		
+cv.imshow("Gray", gray)
+
+#Blur
+blur = cv.GaussianBlur(img, (7,7), cv.BORDER_DEFAULT)	// imaginea, kernel size (cat de blurat sa fie), functia 
+cv.imshow("Blur", blur)
+
+# Edge Cascade -> Canny
+canny = cv.Canny(blur, 125, 175)       // imaginea, si valorile treshold 1 si 2
+cv.imshow("Canny Edges", canny)
+
+# Dilating the image
+dilated = cv.dilate(canny, (7,7), iterations=3)		//imaginea canny, matricea kernel, si numarul de iteratii (grosimea)
+cv.imshow("Dilated Photo", dilated)
+
+#Eroding
+eroded = cv.erode(dilated, (7,7), iterations=3)    // imaginea dilatata, matricea kernel, numarul de iteratii
+cv.imshow("Eroded", eroded)
+
+# Resize 
+resized = cv.resize(img, (500,500), interpolation=cv.INTER_AREA) // imaginea, dimensiunea, functia folosita pentru micsorarea pozei
+cv.imshow("Resized", resized)
+
+
+# Cropping
+cropped = img[50:200, 200:400]
+cv.imshow("Cropped",cropped)
+
+cv.waitKey(0)
+
+				Chapter 5: Image Transformations
+import cv2 as cv
+import numpy as np
+img = cv.imread("Photos/boston.jpg")
+
+cv.imshow("Boston", img)
+
+# Translation
+def translate(img, x, y):		// x si y sunt numarul de pixeli pe care vrem sa ii mutam de-a lungul axei x si y
+	transMatr = np.float32([[1,0,x],[0,1,y]])		// o lista cu cate 2 liste inauntru
+	dimensions = (img.shape[1], img.shape[0])		// width and height
+	return cv.warpAffine(img, transMatr, dimensions)
+# -x --> Left
+# -y --> Up
+# x --> Right
+# y --> Down
+
+translated = translate(img, -100, 100)		// stanga jos
+cv.imshow("Translated", translated)
+
+# Rotation
+def rotate(img, angle, rotPoint=None):
+	(height,width) = img.shape[:2]    // primele 2 valori din shape
+
+	if rotPoint is None:
+		rotPoint = (width//2, height//2)	// centrul imaginii
+
+	rotMatr = cv.getRotationMatrix2D(rotPoint, angle, 1.0)   //centrul, unghiul si valoarea scalara
+	dimensions = (width,height)
+	return cv.warpAffine(img, rotMatr, dimensions)
+
+rotated = rotate(img, -45)		// clockwise rotation
+cv.imshow("Rotated", rotated)
+
+rotated_rotated = rotate(rotated, -90)		// va sta pe lungime
+cv.imshow("Rotated rotated", rotated_rotated)
+
+# Resizing
+resized = cv.resize(img, (500,500), interpolation=cv.INTER_CUBIC)  // marim imaginea cu cubic, pentru a avea o calitate mai buna decat LINEAR
+cv.imshow("Resized", resized)
+
+# Flipping
+flip = cv.flip(img, -1)		// 0 - vertical ; 1 - orizontal ; -1 = vertical si orizontal
+cv.imshow("Flip", flip)
+
+# Cropping
+cropped = img[200:400, 300:400]		// x, y
+cv.imshow("Cropped", cropped)
+
+cv.waitKey(0)
+
+				Chapter 6: Contour detection
+import cv2 as cv
+import numpy as np
+
+img = cv.imread("Photos/cats.jpg")
+cv.imshow("Cats",img)
+
+blank = np.zeros(img.shape[:2], dtype="uint8")		// 
+cv.imshow("Blank", blank)
+
+gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)		// convertim imaginea BGR in GRAY
+cv.imshow("Gray", gray)
+
+	# Option 1
+blur = cv.GaussianBlur(gray, (5,5), cv.BORDER_DEFAULT) // imaginea, kernel,
+cv.imshow("Blur", blur)
+
+canny = cv.Canny(blur, 125, 175)
+cv.imshow("Canny Edges", canny)
+	# Option 2
+#ret, thresh = cv.threshold(gray, 125, 255, cv.THRESH_BINARY)		// img, valorile sub 125 vor fi notate cu 0 sau negru, iar cele peste 125 vor fi salvate cu alb, binarizam imaginile
+#cv.imshow("Thresh", thresh)
+
+contours, hierarchies = cv.findContours(canny, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)	//RETR_LIST - pentru toate valorile din lista; CHAIN_APPROX_NONE - returneaza toate punctele liniilor de contur
+print(f"{len(contours)} contour(s) found!")
+
+cv.drawContours(blank, contours, -1, (0,0,255), 1)    //imaginea blank, lista de contururi, toate elementele, culoarea(BGR), grosimea
+cv.imshow("Contours Drawn", blank)
+
+
+cv.waitKey(0)
+
+				Chapter 7: Color Spaces
+import cv2 as cv
+import matplotlib.pyplot as plt
+
+img = cv.imread("Photos/boston.jpg")
+cv.imshow("Boston", img)
+
+#plt.imshow(img)
+#plt.show()
+
+#BGR to grayscale ( Blue, Green, Red )
+gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+cv.imshow("Gray", gray)
+
+# BGR to HSV ( Hue, Saturation, Value )
+hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
+cv.imshow("HSV", hsv)
+
+# BGR to L*a*b ( Luminance, hue from green to red, hue from blue to yellow )
+lab = cv.cvtColor(img, cv.COLOR_BGR2LAB)
+cv.imshow("LAB", lab)
+
+# BGR to RGB
+rgb = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+cv.imshow("RGB", rgb)
+
+#plt.imshow(rgb)
+#plt.show()
+
+# HSV to BGR
+hsv_bgr = cv.cvtColor(hsv, cv.COLOR_HSV2BGR)
+cv.imshow("HSV --> BGR", hsv_bgr)
+
+# LAB to BGR
+lab_bgr = cv.cvtColor(lab, cv.COLOR_LAB2BGR)
+cv.imshow("LAB --> BGR", lab_bgr)
+
+cv.waitKey(0)
+
+				Chapter 8: Color Channels
+import cv2 as cv
+import numpy as np
+
+img = cv.imread("Photos/boston.jpg")
+cv.imshow("Boston", img)
+
+blank = np.zeros(img.shape[:2], dtype="uint8")
+
+b,g,r = cv.split(img)
+
+blue = cv.merge([b,blank,blank])
+green = cv.merge([blank,g,blank])
+red = cv.merge([blank,blank,r])
+
+cv.imshow("Blue", blue)
+cv.imshow("Green", green)
+cv.imshow("Red", red)
+
+print(img.shape)
+print(b.shape)
+print(g.shape)
+print(r.shape)
+
+merged = cv.merge([b,g,r])
+cv.imshow("Merged Image", merged)
+
+cv.waitKey(0)
+
+				Chapter 9: Blurring
+import cv2 as cv
+
+img = cv.imread("Photos/cats.jpg")
+cv.imshow("Cats", img)
+
+# Averaging Blur
+average = cv.blur(img, (3,3))
+cv.imshow("Average Blur", average)
+
+# Gaussian Blur
+gaussian = cv.GaussianBlur(img, (3,3), 0)
+cv.imshow("Gaussian Blur", gaussian)
+
+# Median Blur
+median = cv.medianBlur(img, 3)
+cv.imshow("Median Blur", median)
+
+# Bilateral Blur
+bilateral = cv.bilateralFilter(img, 10, 35, 25)
+cv.imshow("Bilateral Blur", bilateral)
+
+
+cv.waitKey(0)
+
+
+				Chapter 10: BITWISE operations
+import cv2 as cv
+import numpy as np
+
+blank = np.zeros((400,400),dtype="uint8")
+
+rectangle = cv.rectangle(blank.copy(), (30, 30), (370,370), 255, -1)
+circle = cv.circle(blank.copy(), (200,200), 200, 255, -1)
+
+cv.imshow("Rectangle", rectangle)
+cv.imshow("Circle", circle)
+
+# Bitwise AND --> Interescting regions
+bitwise_and = cv.bitwise_and(rectangle, circle)
+cv.imshow("Bitwise AND", bitwise_and)
+
+# Bitwise OR --> non intersecting and intersecting regions
+bitwise_or = cv.bitwise_or(rectangle, circle)
+cv.imshow("Bitwise OR", bitwise_or)
+
+# Bitwise XOR --> non intersecting regions
+bitwise_xor = cv.bitwise_xor(rectangle, circle)
+cv.imshow("Bitwise XOR", bitwise_xor)
+
+# Bitwise NOT --> inverts binary color
+bitwiser_not = cv.bitwise_not(rectangle)
+cv.imshow("Rectangle NOT", bitwiser_not)
+
+bitwisec_not = cv.bitwise_not(circle)
+cv.imshow("Circle NOT", bitwisec_not)
+
+cv.waitKey(0)
+
+				Chapter 11: Masking
+import cv2 as cv
+import numpy as np
+
+img = cv.imread("Photos/cats.jpg")
+cv.imshow("Cats", img)
+
+blank = np.zeroes(img.shape[:2], dtype="uint8")
+cv.imshow("Blank Image", blank)
+
+circle = cv.circle(blank.copy(), (img.shape[1]//2 + 45, img.shapte[0]//2), 100, 255, -1)
+#cv.imshow("Mask",mask)
+
+rectangle = cv.rectangle(blank.copy(), (30, 30), (370,370), 255, -1)
+
+weird_shape = cv.bitwise_and(circle,rectangle)
+cv.imshow("Weird shape", weird_shape)
+
+masked =cv.bitwise_and(img, img, mask=weird_shape)
+cv.imshow("Weird Shaped Masked Image", masked)
+
+cv.waitKey(0)
+
+
+				Chapter 12: Computing Histograms
+import cv2 as cv
+import matplotlib.pyplot as plt
+import numpy as np
+
+img = cv.imread("Photos/cats.jpg")
+cv.imshow("Cats", img)
+
+blank = np.zeroes(img.shape[:2], dtype="uint8")
+
+gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+cv.imshow("Gray", gray)
+
+mask = cv.circle(blank, (img.shape[1]//2, img.shape[0]//2), 100, 255, -1)
+
+masked = cv.bitwise_and(gray, gray, mask=mask)
+cv.imshow("Mask", masked)
+
+# Grayscale histogram
+gray_hist = cv.calcHist([gray], [0], mask, [256], [0,256])
+
+plt.figure()
+plt.title("Grayscale Histogram")
+plt.xlabel("Bins")
+plt.ylabel("# of pixels")
+plt.plot(gray_hist)
+plt.xlim([0,256])
+plt.show()
+
+# Colour Histogram
+plt.figure()
+plt.title("Colour Histogram")
+plt.xlabel("Bins")
+plt.ylabel("# of pixels")
+colors = ('b','g','r')
+for i,col in enumerate(colors):
+	hist = cv.calcHist([img], [i], mask, [256], [0,256])
+	plt.plot(hist, color=col)
+	plt.xlim([0,256])
+
+plt.show()
+
+cv.waitKey(0)
+
+
+				Chapter 13: Thresholding
+import cv2 as cv
+
+img = cv.imread("Photos/cats.jpg")
+cv.imshow("Cats", img)
+
+gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+cv.imshow("Gray", gray)
+
+# Simple Thresholding
+threshold, thresh = cv.threshold(gray, 150, 255, cv.THRESH_BINARY)
+cv.imshow("Simple Thresholded", thresh)
+
+threshold, thresh_inv = cv.threshold(gray, 150, 255, cv.THRESH_BINARY_INV)
+cv.imshow("Simple Threshold Inverse", thresh_inv)
+
+# Adaptive thresholding
+adaptive_thresh = cv.adaptiveThreshold(gray, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 11, 9)
+
+
+
+cv.imshow("Adaptive Thresholding", adaptive_thresh)
+
+
+cv.waitKey(0)
+
+				Chapter 14: Edge Detection
+import cv2 as cv
+import numpy as np
+
+img = cv.imread("Photos/cats.jpg")
+cv.imshow("Cats", img)
+
+gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+cv.imshow("Gray", gray)
+
+# Laplacian
+lap = cv.Laplacian(gray, cv.CV_64F)
+lap = np.uint8(np.absolute(lap))
+cv.imshow("Laplacian", lap)
+
+# Sobel - gradients
+sobelx = cv.Sobel(gray, cv.CV_64F, 1, 0)
+sobely = cv.Sobel(gray, cv.CV_64F, 0, 1)
+
+combined_sobel = cv.bitwise_or(sobelx, sobely)
+
+cv.imshow("Sobel x", sobelx)
+cv.imshow("Sobel y", sobely)
+cv.imshow("Combined Sobel", combined_sobel)
+
+canny = cv.Canny(gray, 150, 175)
+cv.imshow("Canny", canny)
+
+cv.waitKey(0)
+
+				Chapter 15: Face detection with Haar Cascades
+import cv2 as cv
+
+img = cv.imread("Photos/group 1.jpg")
+cv.imshow("Group of 5 people", img)
+
+gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+cv.imshow("Gray person", gray)
+
+haar_cascade = cv.CascadeClassifier("haar_face.xml")       # fisierul cu date de pe github
+
+faces_rect = haar_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=1)
+
+print(f"Number of faces found = {len(faces_rect)}")
+
+for (x,y,w,h) in faces_rect:
+	cv.rectangle(img, (x, y), (x+w, y+h), (0,255,0), thickness=2)
+
+cv.imshow("Detected Faces", img)
+
+cv.waitKey(0)
+
+				Chapter 16: Face detection with OpenCV build-in recognizer
+	face_train.py file:
+import os
+import cv2 as cv
+import numpy as np
+
+#p = []
+#for i in os.listdir(r"C:\Users\jas\Documents\dev\older\Faces\train"):
+#	p.append(i)
+
+#print(p)
+
+people = ['Ben Affleck', "Elton John", "Jerry Seinfield", "Madonna", "Mindy Kaling"]
+DIR = r"C:\Users\jas\Documents\dev\older\Faces\train"
+
+haar_cascade = cv.CascadeClassifier("haar_face.xml")
+
+feautures = []
+labels = []
+
+def create_train():
+	for person in people:
+		path = os.path.join(DIR, person)
+		label = people.index(person)
+		
+		for img in os.listdir(path):	
+			img_path = os.path.join(path, img)
+			
+			img_array = cv.imread(img_path)
+			gray = cv.cvtColor(img_array, cv.COLOR_BGR2GRAY)
+
+			faces_rect = haar_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=4)
+
+			for (x,y,w,h) in faces_rect:
+				faces_roi = gray[y:y+h, x:x+w]
+				features.append(faces_roi)
+				labels.append(label)
+
+create_train()
+
+print(f"Length of the features = {len(feautures)}")
+print(f"Length of the labels = {len(labels)}")
+print("Training done ----------------------")
+
+feautures = np.array(feautures, dtype="object")
+labels = np.array(labels)
+
+face_recognizer = cv.face.LBPHFaceRecognizer_create()
+
+# Train the Recognizer on the features list and the labels list
+face_recognizer.train(features,labels)
+
+face_recognizer.save("face_trained.yml")
+np.save("features.npy", features)
+np.save("labels.npy", labels)
+
+	face_recognition.py file:
+import cv2 as cv
+import numpy as np
+
+haar_cascade = cv.CascadeClassifier("haar_face.xml")
+
+people = ['Ben Affleck', "Elton John", "Jerry Seinfield", "Madonna", "Mindy Kaling"]
+#features = np.load("feautures.npy", allow_pickle=True)
+#labels = np.load("labels.npy")
+
+face_recognizer = cv.face.LBPHFaceRecognizer_create()
+face_recognizer.read("face_trained.yml")
+
+img = cv.imread(r"full path of picture\picture.jpg"   # here you can switch the path to different pictures you want to check the functionality of the face recognition 
+
+gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+cv.imshow("Person", gray)
+
+# Detect the face in the image
+faces_rect = haar_casvade.detectMultiScale(gray, 1.1, 4)
+
+for (x,y,w,h) in faces_rect:
+	faces_roi = gray[y:y+h, x:x+h]
+	label, confidence = face_recognizer.predict(faces_roi)
+	print(f"Label = {people[label]} with a confidence of {confidence}")
+
+	cv.putText(img, str(people[label]), (20,20), cv.FONT_HERSHEY_COMPLEX, 1.0, (0,255,0), thickness=2)
+	cv.rectangle(img, (x,y), (x+w,y+h), (0,255,0), thickness=2)
+
+cv.imshow("Detected Face", img)
+
+cv.waitKey(0)
